@@ -36,6 +36,7 @@ jobs:
           push: true
           tags: clementtr/api-sellaci:latest
   deploy:
+    needs: docker
     runs-on: ubuntu-latest
     #needs: build_and_push
 
