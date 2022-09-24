@@ -11,7 +11,8 @@ def main():
             'Manchester City',
             'Arsenal',
         ],
-        'nationality': 'Brazil'
+        'nationality': 'Brazil',
+        'birthdate': '1997-04-03',
     }
 
 if __name__ == '__main__':
