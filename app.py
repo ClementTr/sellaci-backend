@@ -1,28 +1,12 @@
 from flask import Flask
+from data import data
 
 app = Flask(__name__)
 
 @app.route('/')
 def main():
     return [
-        {
-            'name': 'Gabriel Jesus',
-            'clubs': [
-                'Palmeiras',
-                'Manchester City',
-                'Arsenal FC',
-            ],
-            'nationality': 'Brazil',
-        },
-        {
-            'name': 'Martin Ødegaard',
-            'clubs': [
-                'Real Madrid',
-                'Real Sociedad',
-                'Arsenal FC',
-            ],
-            'nationality': 'Norwegian',
-        },
+        data
     ]
 
 if __name__ == '__main__':
