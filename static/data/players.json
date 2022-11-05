@@ -1,0 +1,14 @@
+[
+    {
+        "name": "Jesus",
+        "clubs": ["Palmeiras", "Manchester City", "Arsenal"]
+    },
+    {
+        "name": "Odegaard",
+        "clubs": ["Real Madrid", "Real Sociedad", "Arsenal"]
+    },
+    {
+        "name": "Squillaci",
+        "clubs": ["Toulon", "Monaco", "Ajaccio", "Lyon", "Seville", "Arsenal", "Bastia"]
+    }
+]
