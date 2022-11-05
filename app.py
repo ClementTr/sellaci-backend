@@ -42,10 +42,10 @@ def get_players_with_clubs():
     clubs_list = clubs.split(',')
     filename = os.path.join(app.static_folder, f'data/players.json')
     df_players = pd.read_json(filename)
-    df_players['clubs'] = df_players['clubs'].map(lambda x: list(map(str.lower, x)))
+    df_players['Teams'] = df_players['Teams'].map(lambda x: list(map(str.lower, x)))
     df_players_filter = df_players[
-        (df_players['clubs'].apply(lambda x: (clubs_list[0] in x) & (clubs_list[1] in x) & (clubs_list[2] in x)))
-        & (df_players['name'].str.lower() == player)
+        (df_players['Teams'].apply(lambda x: (clubs_list[0] in x) & (clubs_list[1] in x) & (clubs_list[2] in x)))
+        & (df_players['Name'].str.lower() == player)
     ]
 
     response = jsonify(
