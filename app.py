@@ -54,8 +54,8 @@ def get_players_with_clubs():
         success=False
     )
     response.headers.add('Access-Control-Allow-Origin', '*')
-    
+
     return response
 
 if __name__ == '__main__':
-    app.run('0.0.0.0')
+    app.run()  # run our Flask app
