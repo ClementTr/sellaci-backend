@@ -1,21 +1,22 @@
-# This is a basic workflow to help you get started with Actions
+name: Deployment
 
-name: gae-ci-cd
 on:
   push:
-    branches: [main]
-          
+    branches:
+    - master
+  
 jobs:
   deploy:
-    name: Deploying to Google Cloud
+    name: Deploy to App Engine
     runs-on: ubuntu-latest
     steps:
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v0'
-      with:
-        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
-
-    - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v0'
-      with:
-        deliverables: app.yml
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Google App Engine
+        uses: google-github-actions/deploy-appengine@v0.4.0
+        with:
+          project_id: sellaci-367920
+          version: master
+          credentials: ${{secrets.GCP_CREDENTIALS}}
+          flags: --no-cache
+          deliverables: app.yaml
