@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def main():
-    return consultations_to_clean
+    return {'status': 'Welcome on Sellaci platform'}
 
 @app.route('/hospital_data', methods=['GET'])
 def consultations():
