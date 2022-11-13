@@ -1,20 +1,64 @@
 from static.data.consultations_to_clean import consultations_to_clean
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session, redirect
+from config import URL_FRONT, FIREBASE_CREDENTIALS
 import pandas as pd
+import pyrebase
+import requests
 import random
 import json
 import os
 
 app = Flask(__name__)
+firebase = pyrebase.initialize_app(FIREBASE_CREDENTIALS)
+auth = firebase.auth()
+app.secret_key = 'secret'
 
 @app.route('/')
 def main():
     return {'status': 'Welcome on Sellaci platform'}
 
+
+@app.route('/signup', methods=['POST', 'GET'])
+def signup():
+    if request.method == 'POST':
+        try:
+            email = request.form.get('email')
+            password = request.form.get('password')
+            auth.create_user_with_email_and_password(email, password)
+            return redirect(URL_FRONT + 'play.html')
+        except requests.HTTPError as e:
+            error = json.loads(e.args[1])['error']['message']
+            return redirect(f'{URL_FRONT}signup.html?error={error}')
+    return redirect(URL_FRONT + 'signup.html')
+
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    if 'user' in session:
+        response = jsonify(status='logged')
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return redirect(URL_FRONT + 'play.html')
+    else:
+        if request.method == 'POST':
+            email = request.form.get('email')
+            password = request.form.get('password')
+            try:
+                auth.sign_in_with_email_and_password(email, password)
+                session['user'] = email
+                return redirect(URL_FRONT + 'play.html')
+            except Exception as e:
+                return redirect(URL_FRONT + 'login.html')
+        else:
+            return redirect(URL_FRONT + 'login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('user')
+    return redirect(URL_FRONT + 'login.html')
+
 @app.route('/hospital_data', methods=['GET'])
 def consultations():
     try:
-        collection = request.args.get('collection')
+        collection = request.form.get('collection')
         data = []
         filename = os.path.join(app.static_folder, f'data/{collection}.json')
         with open(filename) as blog_file:
