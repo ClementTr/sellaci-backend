@@ -1,6 +1,7 @@
-from static.data.consultations_to_clean import consultations_to_clean
+from config import URL_FRONT, PYREBASE_CREDENTIALS, FIREBASE_CREDENTIALS
 from flask import Flask, request, jsonify, session, redirect
-from config import URL_FRONT, FIREBASE_CREDENTIALS
+from firebase_admin import firestore, credentials
+import firebase_admin
 import pandas as pd
 import pyrebase
 import requests
@@ -9,14 +10,16 @@ import json
 import os
 
 app = Flask(__name__)
-firebase = pyrebase.initialize_app(FIREBASE_CREDENTIALS)
+firebase = pyrebase.initialize_app(PYREBASE_CREDENTIALS)
 auth = firebase.auth()
 app.secret_key = 'secret'
+
+firebase_admin.initialize_app(credential=credentials.Certificate(FIREBASE_CREDENTIALS))
+db = firestore.client()
 
 @app.route('/')
 def main():
     return {'status': 'Welcome on Sellaci platform'}
-
 
 @app.route('/signup', methods=['POST', 'GET'])
 def signup():
@@ -25,6 +28,8 @@ def signup():
             email = request.form.get('email')
             password = request.form.get('password')
             auth.create_user_with_email_and_password(email, password)
+            db.collection('users').document(email).set({'email': email})
+            db.collection('users').document(email).update({"nb_logins": firestore.Increment(1)})
             return redirect(URL_FRONT + 'play.html')
         except requests.HTTPError as e:
             error = json.loads(e.args[1])['error']['message']
@@ -44,28 +49,25 @@ def login():
             try:
                 auth.sign_in_with_email_and_password(email, password)
                 session['user'] = email
+                db.collection('users').document(email).update({"nb_logins": firestore.Increment(1)})
                 return redirect(URL_FRONT + 'play.html')
             except Exception as e:
+                print(e)
                 return redirect(URL_FRONT + 'login.html')
         else:
             return redirect(URL_FRONT + 'login.html')
+
+@app.route('/reset_password',  methods=['POST'])
+def reset_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        auth.send_password_reset_email(email)
+    return redirect(URL_FRONT + 'login.html')
 
 @app.route('/logout')
 def logout():
     session.pop('user')
     return redirect(URL_FRONT + 'login.html')
-
-@app.route('/hospital_data', methods=['GET'])
-def consultations():
-    try:
-        collection = request.form.get('collection')
-        data = []
-        filename = os.path.join(app.static_folder, f'data/{collection}.json')
-        with open(filename) as blog_file:
-            data = json.load(blog_file)
-        return data
-    except:
-        return [{'server-status': 'error'}]
 
 
 @app.route('/random_player', methods=['GET'])
@@ -89,7 +91,7 @@ def get_players_with_clubs():
     df_players['Teams'] = df_players['Teams'].map(lambda x: list(map(str.lower, x)))
     df_players_filter = df_players[
         (df_players['Teams'].apply(lambda x: (clubs_list[0] in x) & (clubs_list[1] in x) & (clubs_list[2] in x)))
-        & (df_players['Name'].str.lower() == player)
+        & (df_players['ShortName'].str.lower() == player)
     ]
 
     response = jsonify(
