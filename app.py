@@ -21,69 +21,50 @@ app.secret_key = 'hdekspzlejdn'
 firebase_admin.initialize_app(credential=credentials.Certificate(FIREBASE_CREDENTIALS))
 db = firestore.client()
 
-USER_ID = ''
 
 @app.route('/')
 def main():
     return {'status': 'Welcome on Sellaci platform'}
 
-@app.route('/signup', methods=['POST', 'GET'])
+@app.route('/signup', methods=['POST'])
 def signup():
     if request.method == 'POST':
         try:
-            email = request.form.get('email')
-            password = request.form.get('password')
+            email = request.json.get('email')
+            password = request.json.get('password')
             auth.create_user_with_email_and_password(email, password)
             db.collection('users').document(email).set({'email': email})
             db.collection('users').document(email).update({"nb_logins": firestore.Increment(1)})
-            USER_ID = email
-            return redirect(URL_FRONT + 'play.html')
+            return jsonify(success=True)
         except requests.HTTPError as e:
             error = json.loads(e.args[1])['error']['message']
-            return redirect(f'{URL_FRONT}signup.html?error={error}')
-    return redirect(URL_FRONT + 'signup.html')
+            return jsonify(success=True, message=error)
+    return jsonify(success=False)
 
-@app.route('/login', methods=['POST', 'GET'])
+@app.route('/login', methods=['POST'])
 @cross_origin()
 def login():
-    if 'user' in session:
-        return redirect(URL_FRONT + 'play.html')
-    else:
-        if request.method == 'POST':
-            email = request.form.get('email')
-            password = request.form.get('password')
-            try:
-                auth.sign_in_with_email_and_password(email, password)
-                db.collection('users').document(email).update({"nb_logins": firestore.Increment(1)})
-                return redirect(URL_FRONT + 'play.html')
-            except Exception as e:
-                return redirect(URL_FRONT + 'login.html')
-        else:
-            return redirect(URL_FRONT + 'login.html')
+    if request.method == 'POST':
+        email = request.json.get('email')
+        password = request.json.get('password')
+        try:
+            auth.sign_in_with_email_and_password(email, password)
+            db.collection('users').document(email).update({"nb_logins": firestore.Increment(1)})
+            return jsonify(success=True)
+        except Exception as e:
+            return jsonify(success=False)
 
 @app.route('/reset_password',  methods=['POST'])
 def reset_password():
     if request.method == 'POST':
-        email = request.form.get('email')
+        email = request.json.get('email')
         auth.send_password_reset_email(email)
-    return redirect(URL_FRONT + 'login.html')
+    return jsonify(success=True)
 
 @app.route('/logout')
 def logout():
     session.pop('user')
-    return redirect(URL_FRONT + 'login.html')
-
-@app.route('/test',  methods=['GET', 'POST'])
-@cross_origin()
-def test():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        print(name)
-        print(session)
-        print(USER_ID)
-        db.collection('users').document(USER_ID).update({"players_find": firestore.ArrayUnion([name])})
-        return redirect(URL_FRONT + 'play.html')
-
+    return jsonify(success=True)
 
 @app.route('/random_player', methods=['GET'])
 @cross_origin()
