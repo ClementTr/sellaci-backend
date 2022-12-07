@@ -1,5 +1,5 @@
-from config import URL_FRONT, PYREBASE_CREDENTIALS, FIREBASE_CREDENTIALS
-from flask import Flask, request, jsonify, session, redirect
+from config import PYREBASE_CREDENTIALS, FIREBASE_CREDENTIALS
+from flask import Flask, request, jsonify, session
 from firebase_admin import firestore, credentials
 from flask_cors import CORS, cross_origin
 import firebase_admin

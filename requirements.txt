@@ -6,3 +6,4 @@ pyrebase4
 firebase-admin==6.0.1
 flask_restful==0.3.9
 prometheus_flask_exporter==0.21.0
+flask_cors

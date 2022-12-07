@@ -1,8 +1,5 @@
 import os
 
-ENV = os.environ.get('ENV')
-URL_FRONT = 'https://sellaci.com/' if ENV == 'production' else 'http://127.0.0.1:8080/'
-
 PYREBASE_CREDENTIALS = {
     "apiKey": os.environ.get('FIREBASE_API_KEY'),
     "authDomain": "sellaci.firebaseapp.com",
