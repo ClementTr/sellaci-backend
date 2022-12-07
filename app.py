@@ -1,6 +1,7 @@
 from config import URL_FRONT, PYREBASE_CREDENTIALS, FIREBASE_CREDENTIALS
 from flask import Flask, request, jsonify, session, redirect
 from firebase_admin import firestore, credentials
+from flask_cors import CORS, cross_origin
 import firebase_admin
 import pandas as pd
 import pyrebase
@@ -10,12 +11,17 @@ import json
 import os
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
+
 firebase = pyrebase.initialize_app(PYREBASE_CREDENTIALS)
 auth = firebase.auth()
-app.secret_key = 'secret'
+app.secret_key = 'hdekspzlejdn'
 
 firebase_admin.initialize_app(credential=credentials.Certificate(FIREBASE_CREDENTIALS))
 db = firestore.client()
+
+USER_ID = ''
 
 @app.route('/')
 def main():
@@ -30,6 +36,7 @@ def signup():
             auth.create_user_with_email_and_password(email, password)
             db.collection('users').document(email).set({'email': email})
             db.collection('users').document(email).update({"nb_logins": firestore.Increment(1)})
+            USER_ID = email
             return redirect(URL_FRONT + 'play.html')
         except requests.HTTPError as e:
             error = json.loads(e.args[1])['error']['message']
@@ -37,10 +44,9 @@ def signup():
     return redirect(URL_FRONT + 'signup.html')
 
 @app.route('/login', methods=['POST', 'GET'])
+@cross_origin()
 def login():
     if 'user' in session:
-        response = jsonify(status='logged')
-        response.headers.add('Access-Control-Allow-Origin', '*')
         return redirect(URL_FRONT + 'play.html')
     else:
         if request.method == 'POST':
@@ -48,11 +54,9 @@ def login():
             password = request.form.get('password')
             try:
                 auth.sign_in_with_email_and_password(email, password)
-                session['user'] = email
                 db.collection('users').document(email).update({"nb_logins": firestore.Increment(1)})
                 return redirect(URL_FRONT + 'play.html')
             except Exception as e:
-                print(e)
                 return redirect(URL_FRONT + 'login.html')
         else:
             return redirect(URL_FRONT + 'login.html')
@@ -69,18 +73,30 @@ def logout():
     session.pop('user')
     return redirect(URL_FRONT + 'login.html')
 
+@app.route('/test',  methods=['GET', 'POST'])
+@cross_origin()
+def test():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        print(name)
+        print(session)
+        print(USER_ID)
+        db.collection('users').document(USER_ID).update({"players_find": firestore.ArrayUnion([name])})
+        return redirect(URL_FRONT + 'play.html')
+
 
 @app.route('/random_player', methods=['GET'])
+@cross_origin()
 def random_player():
     filename = os.path.join(app.static_folder, f'data/players.json')
     with open(filename) as players_file:
         players_data = json.load(players_file)
         random_player = random.choice(players_data)
         response = jsonify(random_player)
-        response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 @app.route('/players_with_clubs', methods=['GET'])
+@cross_origin()
 def get_players_with_clubs():
     clubs = request.args.get('clubs').lower()
     player = request.args.get('player').lower()
@@ -99,8 +115,6 @@ def get_players_with_clubs():
     ) if df_players_filter.shape[0] else jsonify(
         success=False
     )
-    response.headers.add('Access-Control-Allow-Origin', '*')
-
     return response
 
 if __name__ == '__main__':
