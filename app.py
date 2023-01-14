@@ -1,6 +1,7 @@
 from config import PYREBASE_CREDENTIALS, FIREBASE_CREDENTIALS
 from flask import Flask, request, jsonify, session
 from firebase_admin import firestore, credentials
+from functions import get_level, get_indication
 from flask_cors import CORS, cross_origin
 import firebase_admin
 import pandas as pd
@@ -73,6 +74,9 @@ def random_player():
     with open(filename) as players_file:
         players_data = json.load(players_file)
         random_player = random.choice(players_data)
+        random_player['Teams'] = random.sample(random_player['Teams'], 3)
+        random_player['Level'] = get_level(random_player['Teams'])
+        random_player['Indication_First_Letter'] = get_indication(random_player)
         response = jsonify(random_player)
     return response
 
